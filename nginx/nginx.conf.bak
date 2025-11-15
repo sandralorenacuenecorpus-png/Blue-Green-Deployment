@@ -1,0 +1,65 @@
+events {
+    worker_connections 1024;
+}
+
+http {
+    # Upstream para el entorno BLUE
+    upstream blue_backend {
+        server blue-app:3000;
+    }
+
+    # Upstream para el entorno GREEN
+    upstream green_backend {
+        server green-app:3000;
+    }
+
+    # Configuración principal del servidor
+    server {
+        listen 80;
+        server_name localhost;
+
+        # Por defecto, el tráfico va al entorno BLUE
+        # Este archivo puede ser modificado para cambiar entre entornos
+        
+        location / {
+            # ACTIVE ENVIRONMENT: blue
+            # Para cambiar a green, reemplaza la siguiente línea con:
+            # proxy_pass http://green_backend;
+            proxy_pass http://green_backend;
+            
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            
+            # Timeouts
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 60s;
+        }
+
+        # Endpoints para verificar cada entorno directamente
+        location /blue {
+            proxy_pass http://blue_backend/;
+            proxy_set_header Host $host;
+        }
+
+        location /green {
+            proxy_pass http://green_backend/;
+            proxy_set_header Host $host;
+        }
+
+        # Health check endpoint
+        location /health {
+            access_log off;
+            return 200 "Load Balancer OK\n";
+            add_header Content-Type text/plain;
+        }
+
+        # Status page
+        location /status {
+            default_type text/html;
+            return 200 '<html><body><h1>Blue-Green Deployment Status</h1><p>Check <a href="/blue">/blue</a> or <a href="/green">/green</a> environments</p></body></html>';
+        }
+    }
+}
