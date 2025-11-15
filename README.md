@@ -341,7 +341,7 @@ bash nginx/switch.sh green
 ## 👤 Autor
 
 **Tu Nombre**
-- GitHub: [@tu-usuario](https://github.com/tu-usuario)
+- GitHub: sandralorenacuenecorpus-png
 
 ---
 
